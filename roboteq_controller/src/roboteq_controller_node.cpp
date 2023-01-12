@@ -1,4 +1,4 @@
-#include "roboteq_controller/roboteq_controller_node.h"
+#include "roboteq_controller/roboteq_controller_node.hpp"
 
 // static const std::string tag {"[RoboteQ] "};
 static const std::string tag {""};
@@ -30,7 +30,15 @@ void RoboteqDriver::init(){
 	get_parameter("max_rpm", max_rpm_);
 	get_parameter("cmd_vel_topic", cmd_vel_topic_);
 
-	RCLCPP_INFO_STREAM(this->get_logger(),tag << "cmd_vel:" << cmd_vel_topic_);
+	RCLCPP_INFO_STREAM(this->get_logger(),tag << "cmd_vel: " << cmd_vel_topic_);
+	RCLCPP_INFO_STREAM(this->get_logger(),"frequency: " << frequency_);
+	RCLCPP_INFO_STREAM(this->get_logger(),"serial_port: " << serial_port_);
+	RCLCPP_INFO_STREAM(this->get_logger(),"closed_loop: " << closed_loop_);
+	RCLCPP_INFO_STREAM(this->get_logger(),"baudrate: " << baudrate_);
+	RCLCPP_INFO_STREAM(this->get_logger(),"diff_drive_mode_: " << diff_drive_mode_);
+	RCLCPP_INFO_STREAM(this->get_logger(),"wheel_circumference:"  << wheel_circumference_);
+	RCLCPP_INFO_STREAM(this->get_logger(),"track_width: " << track_width_);
+	RCLCPP_INFO_STREAM(this->get_logger(),"max_rpm: " << max_rpm_);
 
 	if (closed_loop_){
 		RCLCPP_INFO_STREAM(this->get_logger(),tag << "In CLOSED-LOOP mode!!!! serial port:" << serial_port_);

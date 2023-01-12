@@ -28,6 +28,8 @@ find_package(roboteq_interfaces REQUIRED)
 find_package(serial REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+
 
 
 include_directories(include)
@@ -39,6 +41,18 @@ set(node_plugins "")
 
 add_executable(roboteq_controller_node src/roboteq_controller_node.cpp)
 ament_target_dependencies(roboteq_controller_node rclcpp std_msgs roboteq_interfaces serial geometry_msgs nav_msgs)
+
+add_executable(diff_odom_node src/diff_odom_node.cpp)
+ament_target_dependencies(diff_odom_node rclcpp std_msgs roboteq_interfaces serial geometry_msgs nav_msgs tf2_ros)
+
+add_executable(config_client src/config_client.cpp)
+ament_target_dependencies(config_client rclcpp std_msgs roboteq_interfaces)
+
+add_executable(command_client src/command_client.cpp)
+ament_target_dependencies(command_client rclcpp std_msgs roboteq_interfaces)
+
+add_executable(maintenance_client src/maintenance_client.cpp)
+ament_target_dependencies(maintenance_client rclcpp std_msgs roboteq_interfaces)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

@@ -26,7 +26,6 @@
 #include "nav_msgs/msg/odometry.hpp"
 
 #include "roboteq_interfaces/msg/channel_values.hpp"
-
 #include "roboteq_interfaces/srv/config.hpp"
 #include "roboteq_interfaces/srv/maintenance.hpp"
 #include "roboteq_interfaces/srv/command.hpp"
