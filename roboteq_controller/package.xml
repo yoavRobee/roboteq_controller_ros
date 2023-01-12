@@ -14,6 +14,7 @@
   <depend>roboteq_interfaces</depend>
   <depend>serial</depend>
   <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
 
   <exec_depend>ros2launch</exec_depend>
   <test_depend>ament_lint_auto</test_depend>
@@ -25,3 +26,4 @@
     <build_type>ament_cmake</build_type>
   </export>
 </package>
+
