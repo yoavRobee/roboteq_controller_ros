@@ -76,15 +76,16 @@ void RoboteqDriver::init(){
 
 
 RoboteqDriver::RoboteqDriver(const rclcpp::NodeOptions &options): Node("roboteq_controller", options),
-	wheel_circumference_(0.),
-	track_width_(0.),
-	max_rpm_(0.),
-	frequency_(0),
 	serial_port_("dev/ttyUSB0"),
 	baudrate_(112500),
 	closed_loop_(false),
 	diff_drive_mode_(false),
-	cmd_vel_topic_("cmd_vel"){
+	wheel_circumference_(0.),
+	track_width_(0.),
+	max_rpm_(0.),
+	cmd_vel_topic_("cmd_vel"),
+	frequency_(0)
+{
 	
 	declare();
 	init();
@@ -168,7 +169,9 @@ void RoboteqDriver::cmdSetup(){
 
 
 void RoboteqDriver::run(){
-	// initializeServices();
+
+	initializeServices();
+
 	std::stringstream ss0, ss1;
 	ss0 << "^echof 1_";
 	ss1 << "# c_/\"DH?\",\"?\"";
@@ -252,53 +255,57 @@ void RoboteqDriver::cmdVelCallback(const geometry_msgs::msg::Twist &msg){
 	// RCLCPP_INFO_STREAM(this->get_logger(),cmd_str.str());
 }
 
+bool RoboteqDriver::configService(roboteq_interfaces::srv::Config_Request::SharedPtr request, 
+								  roboteq_interfaces::srv::Config_Response::SharedPtr response){
+	std::stringstream str;
+	str << "^" << request->user_input << " " << request->channel << " " << request->value << "_ "
+		<< "%\clsav321654987";
+	ser_.write(str.str());
+	ser_.flush();
+	response->result = str.str();
 
-// bool RoboteqDriver::configService(roboteq_controller::config_srv::Request &request, 
-// 									roboteq_controller::config_srv::Response &response){
-// 	std::stringstream str;
-// 	str << "^" << request.userInput << " " << request.channel << " " << request.value << "_ "
-// 		<< "%\clsav321654987";
-// 	ser_.write(str.str());
-// 	ser_.flush();
-// 	response.result = str.str();
-
-// 	RCLCPP_INFO_STREAM(this->get_logger(),tag << response.result);
-// 	return true;
-// }
-
-
-// bool RoboteqDriver::commandService(roboteq_controller::command_srv::Request &request, roboteq_controller::command_srv::Response &response)
-// {
-// 	std::stringstream str;
-// 	str << "!" << request.userInput << " " << request.channel << " " << request.value << "_";
-// 	ser_.write(str.str());
-// 	ser_.flush();
-// 	response.result = str.str();
-
-// 	RCLCPP_INFO_STREAM(this->get_logger(),tag << response.result);
-// 	return true;
-// }
+	RCLCPP_INFO_STREAM(this->get_logger(),tag << response->result);
+	return true;
+}
 
 
-// bool RoboteqDriver::maintenanceService(roboteq_controller::maintenance_srv::Request &request, roboteq_controller::maintenance_srv::Response &response)
-// {
-// 	std::stringstream str;
-// 	str << "%" << request.userInput << " "
-// 		<< "_";
-// 	ser_.write(str.str());
-// 	ser_.flush();
-// 	response.result = ser_.read(ser_.available());
+bool RoboteqDriver::commandService(roboteq_interfaces::srv::Command_Request::SharedPtr request, 
+								   roboteq_interfaces::srv::Command_Response::SharedPtr response)
+{
+	std::stringstream str;
+	str << "!" << request->user_input << " " << request->channel << " " << request->value << "_";
+	ser_.write(str.str());
+	ser_.flush();
+	response->result = str.str();
 
-// 	RCLCPP_INFO_STREAM(this->get_logger(),response.result);
-// 	return true;
-// }
+	RCLCPP_INFO_STREAM(this->get_logger(),tag << response->result);
+	return true;
+}
 
 
-// void RoboteqDriver::initializeServices(){
-// 	configsrv_ 			= nh_.advertiseService("config_service", &RoboteqDriver::configService, this);
-// 	commandsrv_ 		= nh_.advertiseService("command_service", &RoboteqDriver::commandService, this);
-// 	maintenancesrv_ 	= nh_.advertiseService("maintenance_service", &RoboteqDriver::maintenanceService, this);
-// }
+bool RoboteqDriver::maintenanceService(roboteq_interfaces::srv::Maintenance_Request::SharedPtr request, 
+									   roboteq_interfaces::srv::Maintenance_Response::SharedPtr response)
+{
+	std::stringstream str;
+	str << "%" << request->user_input << " "
+		<< "_";
+	ser_.write(str.str());
+	ser_.flush();
+	response->result = ser_.read(ser_.available());
+
+	RCLCPP_INFO_STREAM(this->get_logger(),response->result);
+	return true;
+}
+
+
+void RoboteqDriver::initializeServices(){
+	    command_srv_     =create_service<roboteq_interfaces::srv::Command>(
+              				"command_service", std::bind(&RoboteqDriver::commandService, this, std::placeholders::_1, std::placeholders::_2));              
+		config_srv_      =create_service<roboteq_interfaces::srv::Config>(
+              				"config_service", std::bind(&RoboteqDriver::configService, this, std::placeholders::_1, std::placeholders::_2));   
+		maintenance_srv_ =create_service<roboteq_interfaces::srv::Maintenance>(
+              				"maintenance_service", std::bind(&RoboteqDriver::maintenanceService, this, std::placeholders::_1, std::placeholders::_2));   
+}
 
 
 void RoboteqDriver::queryCallback(){
@@ -345,14 +352,14 @@ void RoboteqDriver::queryCallback(){
 			}
 
 			if (fields_H.size() > 0 && fields_H[0] == "H"){
-				for (int i = 0; i < fields_H.size() - 1; ++i){
+				for (long unsigned int i = 0; i < fields_H.size() - 1; ++i){
 					std::vector<std::string> sub_fields_H;
 					boost::split(sub_fields_H, fields_H[i + 1], boost::algorithm::is_any_of(":"));
 					
 					roboteq_interfaces::msg::ChannelValues msg;
 					msg.header.stamp = current_time;
 
-					for (int j = 0; j < sub_fields_H.size(); j++){
+					for (long unsigned int j = 0; j < sub_fields_H.size(); j++){
 						try{
 							msg.value.push_back(boost::lexical_cast<int>(sub_fields_H[j]));
 						}
